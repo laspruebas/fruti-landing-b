@@ -1,1 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FRUTI v0.6 · Trazabilidad simple, de la finca a tu mesa</title>
+  <meta name="description" content="FRUTI · Trazabilidad de frutas y verduras · Productores, empaques, mercados y verdulerías conectados con el consumidor." />
+  <style>
+    :root{
+      --fruti-yellow: rgb(238,209,48); /* pedido del usuario */
+      --fruti-green-600: #2d6a4f;
+      --fruti-green-500: #40916c;
+      --fruti-green-200: #b7e4c7;
+      --ink-900: #0f172a;
+      --ink-700: #334155;
+      --ink-500: #64748b;
+      --ink-200: #e5e7eb;
+      --bg: #ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink-900);font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans,"Apple Color Emoji","Segoe UI Emoji"}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1120px;margin:0 auto;padding:24px}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;border-bottom:1px solid var(--ink-200);position:sticky;top:0;background:#fff;z-index:10}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .brand svg{width:28px;height:28px}
+    .nav-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{appearance:none;border:none;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary{background:var(--fruti-yellow)}
+    .btn-outline{border:1px solid var(--ink-200);background:#fff}
+    .hero{display:grid;grid-template-columns:1fr;gap:24px;padding:36px 24px}
+    .hero h1{font-size:clamp(28px,4vw,46px);line-height:1.1;margin:0}
+    .hero p{font-size:clamp(16px,2vw,20px);color:var(--ink-700)}
+    .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--fruti-green-200);color:var(--fruti-green-600);font-weight:700;font-size:12px}
+
+    .grid-3{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:720px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+    .card{border:1px solid var(--ink-200);border-radius:16px;padding:16px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+    .card h3{margin:8px 0 4px}
+    .muted{color:var(--ink-500)}
+
+    .section{padding:24px}
+    .section h2{font-size: clamp(22px,3vw,32px);margin:0 0 8px}
+
+    .footer{border-top:1px solid var(--ink-200);padding:24px;color:var(--ink-500);font-size:14px}
+
+    /* Router views */
+    .view{display:none}
+    .view.active{display:block}
+
+    /* Forms */
+    .field{display:flex;flex-direction:column;gap:6px}
+    .input{padding:12px 14px;border:1px solid var(--ink-200);border-radius:12px;font-size:16px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+
+    /* Timeline */
+    .timeline{position:relative;margin:8px 0;padding-left:20px}
+    .timeline:before{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--ink-200)}
+    .t-item{position:relative;margin:0 0 14px 0}
+    .t-item:before{content:"";position:absolute;left:-14px;top:4px;width:10px;height:10px;border-radius:999px;background:var(--fruti-green-500)}
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(min-width:720px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .kpi{border:1px solid var(--ink-200);border-radius:14px;padding:12px;text-align:center}
+    .kpi b{font-size:20px;display:block}
+
+    .role-cards{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:880px){.role-cards{grid-template-columns:repeat(4,1fr)}}
+
+    .hint{font-size:12px;color:var(--ink-500)}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">
+      <!-- Banana pixel minimal (SVG) -->
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M8 44c12 10 30 12 44 0 4-4 4-10 0-14-2-2-6-2-8 0-10 10-22 8-30 2-4-3-8 2-6 6z" fill="rgb(238,209,48)"/>
+        <path d="M48 18c4 0 6 2 6 6-3-2-6-2-8 0-2-4 0-6 2-6z" fill="#2d6a4f"/>
+      </svg>
+      <span>FRUTI</span>
+    </div>
+    <div class="nav-actions">
+      <a class="btn btn-outline" href="#/market">Soy consumidor</a>
+      <a class="btn btn-primary" href="#/proveedor">Soy proveedor</a>
+    </div>
+  </nav>
+
+  <!-- Router views -->
+  <main class="container">
+    <!-- HOME / LANDING -->
+    <section id="view-home" class="view active">
+      <div class="hero">
+        <span class="badge">MVP v0.6</span>
+        <h1>De la finca a tu mesa, con trazabilidad simple.</h1>
+        <p>Conectamos productores, empaques, mercados y verdulerías para que el consumidor pueda conocer el origen real de lo que come.</p>
+        <div class="cta">
+          <a class="btn btn-outline" href="#/market">Soy consumidor</a>
+          <a class="btn btn-primary" href="#/proveedor">Soy proveedor</a>
+        </div>
+      </div>
+
+      <!-- CTA central: Traza un lote -->
+      <section class="section" id="cta-traza-centro">
+        <div class="card" style="text-align:center">
+          <h2 style="margin-bottom:6px">Trazá un lote</h2>
+          <p class="muted" style="margin-top:0">Escaneá o ingresá el código y mirá el recorrido completo.</p>
+          <a class="btn btn-primary" href="#/consumidor">Ir a trazabilidad</a>
+        </div>
+      </section>
+
+      <!-- CTA inferior: Traza un lote -->
+      <section class="section" id="cta-traza-inferior">
+        <div class="card" style="text-align:center">
+          <h3 style="margin:6px 0">¿Tenés un código a mano?</h3>
+          <a class="btn btn-outline" href="#/consumidor">Trazá un lote</a>
+        </div>
+      </section>
+    </section>
+
+      <section class="section">
+        <h2>Beneficios</h2>
+        <div class="grid-3">
+          <div class="card"><h3>Transparencia</h3><p class="muted">Timeline completo por lote/sublote.</p></div>
+          <div class="card"><h3>Flexibilidad</h3><p class="muted">Unidades múltiples (kg, cajas, unidades). Factores de conversión configurables.</p></div>
+          <div class="card"><h3>Velocidad</h3><p class="muted">Listo para integrarse a tu operación actual (Forms/ETL/API).</p></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- PROVEEDOR: selector de rol + login -->
+    <section id="view-proveedor" class="view">
+      <h2>Ingresar como proveedor</h2>
+      <p class="muted">Seleccioná tu rol para continuar al acceso. Podés solicitar un usuario al administrador.</p>
+      <div class="role-cards">
+        <div class="card"><h3>Productor</h3><p class="muted">Crea lotes y sigue su recorrido hasta góndola.</p><div class="row"><button class="btn btn-primary" data-goto-login data-role="productor">Ingresar</button></div></div>
+        <div class="card"><h3>Empaque</h3><p class="muted">Recibe lotes, genera sublotes y conversión kg→cajas.</p><div class="row"><button class="btn btn-primary" data-goto-login data-role="empaque">Ingresar</button></div></div>
+        <div class="card"><h3>Mercado</h3><p class="muted">Administra entradas/salidas hacia retail.</p><div class="row"><button class="btn btn-primary" data-goto-login data-role="mercado">Ingresar</button></div></div>
+        <div class="card"><h3>Retail (Verdulería)</h3><p class="muted">Stock por sucursal y QR para clientes.</p><div class="row"><button class="btn btn-primary" data-goto-login data-role="retail">Ingresar</button></div></div>
+      </div>
+      <p class="hint" style="margin-top:10px">Demo MVP: el login es simulado. En producción, conectar con Supabase Auth (link mágico o email+clave).</p>
+    </section>
+
+    <!-- MARKETPLACE público (consumidor) -->
+    <section id="view-market" class="view">
+      <h2>Marketplace</h2>
+      <p class="muted">Explorá productos con trazabilidad. (Demo)</p>
+      <div class="grid-3">
+        <div class="card"><h3>Banana Cavendish</h3><p class="muted">Finca Los Mangos · QR disponible</p><div class="row"><a class="btn btn-outline" href="#/consumidor?c=ABC123">Ver trazabilidad</a><a class="btn btn-primary" id="go-consumer-dashboard">Ir al dashboard</a></div></div>
+        <div class="card"><h3>Tomate Red Globe</h3><p class="muted">Huerta Santa Clara · QR</p><div class="row"><a class="btn btn-outline" href="#/consumidor?c=TMT456">Ver trazabilidad</a><a class="btn btn-primary" id="go-consumer-dashboard-2">Ir al dashboard</a></div></div>
+        <div class="card"><h3>Palta Hass</h3><p class="muted">Coop Andina · QR</p><div class="row"><a class="btn btn-outline" href="#/consumidor?c=PAL789">Ver trazabilidad</a><a class="btn btn-primary" id="go-consumer-dashboard-3">Ir al dashboard</a></div></div>
+      </div>
+      <p class="hint" style="margin-top:10px">En producción, esta vista consulta un endpoint público <code>/market</code>.</p>
+    </section>
+
+    <!-- CONSUMIDOR: trazabilidad pública -->
+    <section id="view-consumidor" class="view">
+      <h2>Trazá tu fruta</h2>
+      <p class="muted">Ingresá el código del lote (o escaneá el QR en la góndola).</p>
+      <div class="row">
+        <input id="code-input" class="input" placeholder="Ej.: ABC123" />
+        <button class="btn btn-primary" id="btn-trace">Ver trazabilidad</button>
+      </div>
+      <div id="trace-result" style="margin-top:16px"></div>
+    </section>
+
+    <!-- LOGIN (demo) -->
+    <section id="view-login" class="view">
+      <h2>Acceso</h2>
+      <p class="muted">Ingresá tu email para continuar. (Demo: sin verificación)</p>
+      <div class="field" style="max-width:420px">
+        <label for="email">Email</label>
+        <input id="email" type="email" class="input" placeholder="tu@email.com" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="btn-login">Entrar</button>
+        <button class="btn btn-outline" id="btn-cancel-login">Cancelar</button>
+      </div>
+      <p class="hint" style="margin-top:10px">Producción: usar Supabase Auth. Guardar <code>access_token</code> y rol en <code>localStorage</code>.</p>
+    </section>
+
+    <!-- DASHBOARD (router por rol) -->
+    <section id="view-dashboard" class="view">
+      <h2 id="db-title">Panel</h2>
+      <p class="muted" id="db-sub">Resumen de estado por rol.</p>
+
+      <!-- KPIs generales (ejemplo Productor) -->
+      <div class="kpis" style="margin-top:10px">
+        <div class="kpi"><span class="muted">Lotes activos</span><b id="kpi-activos">-</b></div>
+        <div class="kpi"><span class="muted">En tránsito</span><b id="kpi-transito">-</b></div>
+        <div class="kpi"><span class="muted">En retail</span><b id="kpi-retail">-</b></div>
+        <div class="kpi"><span class="muted">Consumidos</span><b id="kpi-consumidos">-</b></div>
+      </div>
+
+      <div class="grid-3" style="margin-top:16px">
+        <div class="card">
+          <h3>Estado de lotes</h3>
+          <div class="timeline" id="db-timeline"></div>
+        </div>
+        <div class="card">
+          <h3>Alertas</h3>
+          <ul id="db-alertas" class="muted" style="padding-left:18px"></ul>
+        </div>
+        <div class="card">
+          <h3>Acciones rápidas</h3>
+          <div class="row">
+            <button class="btn btn-primary" id="btn-nuevo-lote">Nuevo lote</button>
+            <button class="btn btn-outline" id="btn-transferir">Transferir</button>
+          </div>
+          <p class="hint" style="margin-top:8px">Producción: estos botones abren formularios conectados a la API.</p>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <button class="btn btn-outline" id="btn-logout">Cerrar sesión</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    © <span id="year"></span> FRUTI · MVP v0.6 · Trazabilidad de frutas y verduras
+  </footer>
+
+  <script>
+    // =============================
+    // Config (listo para .env en Vercel/Cloudflare)
+    // =============================
+    const API_BASE = window.API_BASE || "https://api.fruti.local"; // reemplazar por tu FastAPI en Render
+
+    // Router simple por hash
+    const routes = {
+      home: "view-home",
+      proveedor: "view-proveedor",
+      market: "view-market",
+      consumidor: "view-consumidor",
+      login: "view-login",
+      dashboard: "view-dashboard",
+    };
+
+    const state = {
+      pendingRole: null, // rol elegido antes de login
+      session: null, // { email, role }
+    };
+
+    // Utilidad: cambiar vista
+    function show(view){
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById(view)?.classList.add('active');
+      window.scrollTo({top:0,behavior:'instant'});
+    }
+
+    // Hash router básico
+    function router(){
+      const hash = location.hash.replace('#/','');
+      if(!hash){ show(routes.home); return; }
+      const viewId = routes[hash] || routes.home;
+      show(viewId);
+      if(viewId === routes.consumidor){
+        // si viene ?c=ABC en URL, autocompletar
+        const params = new URLSearchParams(location.search);
+        const c = params.get('c');
+        if(c){ document.getElementById('code-input').value = c; traceCode(c); }
+      }
+      if(viewId === routes.dashboard){ renderDashboard(); }
+    }
+    window.addEventListener('hashchange', router);
+
+    // Eventos nav demo
+    document.addEventListener('click', (ev)=>{
+      const t = ev.target;
+      if(t.matches('[data-goto-login]')){
+        const role = t.getAttribute('data-role');
+        state.pendingRole = role;
+        location.hash = '#/login';
+        return;
+      }
+      // Ir al dashboard desde marketplace (consumidor público)
+      if(t.id && t.id.startsWith('go-consumer-dashboard')){
+        location.hash = '#/dashboard';
+        return;
+      }
+    });
+
+    // Login (demo MVP)
+    document.getElementById('btn-login')?.addEventListener('click', ()=>{
+      const email = document.getElementById('email').value.trim();
+      const role = state.pendingRole || 'productor';
+      if(!email){ alert('Ingresá un email.'); return; }
+      // DEMO: guardar en localStorage y redirigir
+      const session = { email, role };
+      localStorage.setItem('fruti_session', JSON.stringify(session));
+      state.session = session;
+      location.hash = '#/dashboard';
+    });
+    document.getElementById('btn-cancel-login')?.addEventListener('click', ()=>{
+      state.pendingRole = null; location.hash = '#/proveedor';
+    });
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', ()=>{
+      localStorage.removeItem('fruti_session'); state.session=null; location.hash = '#/proveedor';
+    });
+
+    // Consumidor: trazabilidad mock
+    document.getElementById('btn-trace')?.addEventListener('click', ()=>{
+      const code = document.getElementById('code-input').value.trim();
+      if(!code){ alert('Ingresá un código de lote.'); return; }
+      traceCode(code);
+    });
+
+    function traceCode(code){
+      const mount = document.getElementById('trace-result');
+      mount.innerHTML = '';
+      // MOCK: en producción, fetch(`${API_BASE}/trace/${code}`)
+      const data = mockTrace(code);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>Lote <code>${code}</code></h3>
+        <p class="muted">Producto: Banana Cavendish · Origen: Finca Los Mangos · Cert.: SENASA / BPA</p>
+        <div class="timeline">
+          ${data.events.map(e=>`<div class="t-item"><b>${e.title}</b><div class="muted">${e.when} · ${e.where}</div><div>${e.note||''}</div></div>`).join('')}
+        </div>
+        <div class="hint">Vista pública. Los datos sensibles no se muestran.</div>
+      `;
+      mount.appendChild(card);
+    }
+
+    function mockTrace(code){
+      return {
+        code,
+        events:[
+          {title:'CREADO', when:'2025-10-12 08:30', where:'Productor · Finca Los Mangos', note:'Lote inicial 1,200 kg'},
+          {title:'ENVIADO_A_EMPAQUE', when:'2025-10-12 18:10', where:'Transporte interno', note:'Remito 0001-123'},
+          {title:'RECIBIDO_EMPAQUE', when:'2025-10-13 07:55', where:'Empaque Verde S.A.', note:'Sin incidencias'},
+          {title:'EMPACADO', when:'2025-10-13 13:20', where:'Línea 2', note:'Salida: 96 cajas (12.5 kg c/u)'},
+          {title:'ENVIADO_A_MERCADO', when:'2025-10-14 06:40', where:'Mercado Central', note:'Camión T-45'},
+          {title:'RECIBIDO_MERCADO', when:'2025-10-14 09:05', where:'Nave 3 · Box 12', note:'Ingreso a stock'},
+          {title:'ENVIADO_A_RETAIL', when:'2025-10-15 07:30', where:'Retail Verdulín · Sucursal Palermo', note:'Guía 7789'},
+          {title:'DISPONIBLE_EN_GONDOLA', when:'2025-10-15 10:10', where:'Góndola 4', note:'QR visible al cliente'}
+        ]
+      }
+    }
+
+    // Dashboard (demo por rol)
+    function renderDashboard(){
+      const saved = localStorage.getItem('fruti_session');
+      state.session = saved ? JSON.parse(saved) : null;
+      const role = state.session?.role || 'productor';
+      document.getElementById('db-title').textContent = `Panel · ${role.charAt(0).toUpperCase()+role.slice(1)}`;
+      document.getElementById('db-sub').textContent = textByRole(role);
+      const kpis = mockKpis(role);
+      document.getElementById('kpi-activos').textContent = kpis.activos;
+      document.getElementById('kpi-transito').textContent = kpis.transito;
+      document.getElementById('kpi-retail').textContent = kpis.retail;
+      document.getElementById('kpi-consumidos').textContent = kpis.consumidos;
+
+      const tl = document.getElementById('db-timeline');
+      tl.innerHTML = mockDbTimeline(role).map(e=>`<div class="t-item"><b>${e.title}</b><div class="muted">${e.when} · ${e.where}</div><div>${e.note||''}</div></div>`).join('');
+
+      const al = document.getElementById('db-alertas');
+      al.innerHTML = mockAlerts(role).map(a=>`<li>${a}</li>`).join('');
+    }
+
+    function textByRole(role){
+      const map = {
+        productor: 'Seguimiento de lotes y envíos hacia empaque, mercado y retail.',
+        empaque: 'Recepción, órdenes de empaque, sublotes y conversiones.',
+        mercado: 'Entradas, salidas a retail y rotación de stock.',
+        retail: 'Inventario por sucursal y QR para clientes.',
+      }; return map[role] || 'Resumen general.';
+    }
+
+    function mockKpis(role){
+      switch(role){
+        case 'productor': return {activos: 5, transito: 2, retail: 8, consumidos: 11};
+        case 'empaque': return {activos: 3, transito: 1, retail: 12, consumidos: 9};
+        case 'mercado': return {activos: 7, transito: 4, retail: 15, consumidos: 6};
+        case 'retail': return {activos: 18, transito: 2, retail: 18, consumidos: 30};
+        default: return {activos: 0, transito: 0, retail: 0, consumidos: 0};
+      }
+    }
+
+    function mockDbTimeline(role){
+      const now = new Date();
+      const f = (d)=> new Date(now.getTime()-d*3600*1000).toISOString().slice(0,16).replace('T',' ');
+      if(role==='productor') return [
+        {title:'Lote ABC123 creado', when:f(72), where:'Finca Los Mangos', note:'1,200 kg'},
+        {title:'Enviado a empaque', when:f(60), where:'Transporte interno', note:'Remito 0001-123'},
+        {title:'Recibido por empaque', when:f(48), where:'Empaque Verde S.A.', note:'Sin incidencias'},
+        {title:'Empacado', when:f(36), where:'Línea 2', note:'96 cajas'},
+        {title:'Enviado a mercado', when:f(24), where:'Mercado Central', note:'Camión T-45'},
+        {title:'En retail', when:f(6), where:'Verdulín Palermo', note:'Góndola 4'},
+      ];
+      if(role==='empaque') return [
+        {title:'Recepción lote ABC123', when:f(48), where:'Planta Empaque Verde', note:'OK'} ,
+        {title:'Orden de empaque #556', when:f(40), where:'Línea 2', note:'Cajas 12.5 kg'},
+        {title:'Despacho a mercado', when:f(24), where:'Dársena 1', note:'Camión T-45'},
+      ];
+      if(role==='mercado') return [
+        {title:'Ingreso ABC123', when:f(22), where:'Nave 3 · Box 12', note:'Rotulado OK'},
+        {title:'Salida a retail', when:f(10), where:'Andén 7', note:'Guía 7789'},
+      ];
+      if(role==='retail') return [
+        {title:'Recepción sublote ABC123-09', when:f(8), where:'Sucursal Palermo', note:'Sin daños'},
+        {title:'Disponible en góndola', when:f(2), where:'Góndola 4', note:'QR visible'},
+      ];
+      return [];
+    }
+
+    function mockAlerts(role){
+      if(role==='productor') return ['2 lotes con demora > 24h en empaque','Certificado BPA vence en 12 días'];
+      if(role==='empaque') return ['Mermas > 5% en la última orden','Temperatura de cámara 9°C (umbral 8°C)'];
+      if(role==='mercado') return ['Rotación baja en Box 12','Incidencia de etiquetado en sublote ABC123-04'];
+      if(role==='retail') return ['Sublote ABC123-09 con 2 días en góndola','Stock bajo de ABC123-11'];
+      return [];
+    }
+
+    // Acciones rápidas (demo)
+    document.getElementById('btn-nuevo-lote')?.addEventListener('click', ()=>{
+      alert('Nuevo lote (demo). En producción, abrir formulario y POST a '+API_BASE+'/lots');
+    });
+    document.getElementById('btn-transferir')?.addEventListener('click', ()=>{
+      alert('Transferir (demo). En producción, abrir formulario y POST a '+API_BASE+'/transfers');
+    });
+
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Init
+    router();
+  </script>
+</body>
+</html>
 
